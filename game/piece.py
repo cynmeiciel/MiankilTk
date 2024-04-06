@@ -2,8 +2,8 @@ from .coord import *
 from .const import *
 
 class Piece:
-    def __init__(self, color, name):
-        self.color = color
+    def __init__(self, is_blue, name):
+        self.is_blue = is_blue
         self.name = name
         
     def __repr__(self):

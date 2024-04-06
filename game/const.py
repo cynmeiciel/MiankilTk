@@ -14,6 +14,8 @@ class PieceType(Enum):
 
 class Turn(Enum):
     BLUE = 1
-    RED = 2
+    BLUE_SELECTED = 2
+    RED = 3
+    RED_SELECTED = 4
     
     
