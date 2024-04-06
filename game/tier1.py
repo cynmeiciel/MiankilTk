@@ -1,22 +1,14 @@
-class Piece:
-    def __init__(self, color, name):
-        self.color = color
-        self.name = name
-        
-    def __repr__(self):
-        return self.name
-        
-    def can_move(self, board, start, end):
-        return True
-    
-    def promote(self):
-        pass
+from .coord import *
+from .piece import *
+
+# TIER 1:
+# PAWN, SENTINEL, SCOUT, WATCHER, GUARD
 
 class Pawn(Piece):
-    def __init__(self, color):
-        super().__init__(color, '♟')
+    def __init__(self, is_blue):
+        super().__init__(is_blue, '♟')
     
-    def can_move(self, start, end):
+    def can_move(self, start : Coord, end : Coord):
         # Check if the start and end coordinates are not on the same column
         if start.x != end.x:
             return False
@@ -26,10 +18,10 @@ class Pawn(Piece):
             return False
         
         # Check if the move is forward
-        if self.color == 'white' and start.y >= end.y:
+        if self.is_blue and start.y >= end.y:
             return False
         
-        if self.color == 'black' and start.y <= end.y:
+        if not self.is_blue and start.y <= end.y:
             return False
         
         return True

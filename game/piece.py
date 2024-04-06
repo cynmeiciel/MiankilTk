@@ -1,5 +1,5 @@
-from . import coord
-from . import const
+from .coord import *
+from .const import *
 
 class Piece:
     def __init__(self, color, name):

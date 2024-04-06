@@ -4,30 +4,51 @@ from game.coord import *
 from game.piece import *
 from game.tier1 import *
 
-# Create the main window and set its size
+# Create the main window (fullscreen) and set its size
 root = tk.Tk()
-root.geometry("1100x1100")
-root.title("Miankil")
+root.geometry('1600x960')
+root.title('Miankil')
 root.configure(bg='black')
 
 # Create a frame to hold the buttons
 frame = tk.Frame(root)
 frame.place(relx=0.5, rely=0.5, anchor='center')
+frame.configure(bg='lightblue')
+
+# Create a new frame that sticks to the right of the current frame
+right_frame = tk.Frame(root)
+right_frame.place(relx=1.0, rely=0.5, anchor='e')
+right_frame.configure(bg='cyan')
+
+# Or create a new frame that sticks to the left of the current frame
+left_frame = tk.Frame(root)
+left_frame.pack(side='left')
+left_frame.configure(bg='aqua')
 
 # Create a label to display messages
 message_label = tk.Label(root, text='', bg='lightblue', fg='red', font=('Arial', 12))
 message_label.pack()
 
-# Create a 11x11 grid of buttons with improved appearance
+# Create a 11x11 grid of buttons with chessboard pattern (swap x and y)
 buttons = [[None for _ in range(11)] for _ in range(11)]
 for i in range(11):
     for j in range(11):
-        button_color = 'lightblue' if (i + j) % 2 == 0 else 'white'
-        button = tk.Button(frame, text='', height=2, width=4, \
+        button_color = 'deepskyblue4' if (i + j) % 2 == 0 else 'slategray1'
+        button = tk.Button(frame, text='', height=3, width=6, \
             bg=button_color, fg='red', font=('Arial', 11), bd=5, \
-            relief='groove', command=lambda x=j, y=10-i: on_button_click(x, y))
-        button.grid(row=i, column=j)
-        buttons[i][j] = button
+            border=3, \
+            relief='groove', command=lambda x=j, y=i: on_button_click(x, y))
+        button.grid(row=10-i, column=j+1)
+        buttons[j][i] = button
+
+# Create labels for the coordinates
+for i in range(11):
+    tk.Label(frame, text=str(i), bg='lightblue', fg='red', font=('Arial', 11)).grid(row=10-i, column=0)
+    tk.Label(frame, text=str(i), bg='lightblue', fg='red', font=('Arial', 11)).grid(row=11, column=i+1)
+
+# Create a button to reset the game
+# reset_button = tk.Button(right_frame, text='Reset', bg='red', fg='white', font=('Arial', 12), command=reset)
+# reset_button.place(x=50, y=50)
 
 # Create a 11x11 list to hold the pieces
 board = [[None for _ in range(11)] for _ in range(11)]
@@ -36,11 +57,7 @@ board = [[None for _ in range(11)] for _ in range(11)]
 selected_piece = None
 selected_coord = None
 
-# Function to create a new piece on the board
-def create_piece(piece, color, coord):
-    board[coord.x][coord.y] = piece(color)
-
-# Function to handle button clicks
+# Function to handle button clicks (mainloop)
 def on_button_click(x, y):
     global selected_piece
     global selected_coord
@@ -49,9 +66,9 @@ def on_button_click(x, y):
         # If a piece is selected, move it to the clicked cell
         if is_valid_move(selected_piece, selected_coord, coord):
             board[coord.x][coord.y] = selected_piece
+            message_label['text'] = f'Moved {selected_piece} to {coord.x}, {coord.y}'
             selected_piece = None
             selected_coord = None
-            message_label['text'] = ''  # Clear the message
     else:
         # If no piece is selected, check if there is a piece in the clicked cell
         if board[coord.x][coord.y] is None:
@@ -69,6 +86,10 @@ def on_button_click(x, y):
         for j in range(11):
             piece = board[i][j]
             buttons[i][j]['text'] = piece if piece else ''
+
+# Function to create a new piece on the board
+def create_piece(piece, color, coord):
+    board[coord.x][coord.y] = piece(color)
 
 def is_empty(board, x, y):
     return board[x][y] is None
@@ -99,8 +120,13 @@ def is_valid_move(piece : Piece, start, end):
     except:
         return True
 
+def reset_game():
+    for i in range(11):
+        for j in range(11):
+            board[i][j] = None
+
 # Initialize the board with some pieces
-create_piece(Pawn, 'white', Coord(0, 0))
+create_piece(Pawn, True, Coord(1, 1))
 
 # Start the Tkinter event loop
 root.mainloop()
