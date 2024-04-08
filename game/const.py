@@ -13,9 +13,7 @@ class PieceType(Enum):
     pass
 
 class Turn(Enum):
-    BLUE = 1
-    BLUE_SELECTED = 2
-    RED = 3
-    RED_SELECTED = 4
+    BLUE = True
+    RED = False
     
     

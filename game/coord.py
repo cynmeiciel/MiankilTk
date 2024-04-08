@@ -14,3 +14,15 @@ class Coord:
     
     def __repr__(self) -> str:
         return f'({self.x}, {self.y})'
+    
+    def abs(self):
+        return Coord(abs(self.x), abs(self.y))
+    
+    def dist_radius(self, other):
+        return max(abs(self.x - other.x), abs(self.y - other.y))
+    
+    def dist_direc_y(self, is_blue : bool, end : 'Coord') -> int:
+        if is_blue:
+            return end.y - self.y
+        else:
+            return self.y - end.y
