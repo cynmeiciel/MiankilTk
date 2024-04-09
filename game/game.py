@@ -25,28 +25,24 @@ class Game:
         self.buttons = [[None for _ in range(11)] for _ in range(11)]
         for i in range(11):
             for j in range(11):
-                button_color = self.get_button_color(i, j)
+                button_bg = self.get_button_bg(i, j)
                 button = tk.Button(self.frame, text='', height=3, width=6, \
-                    bg=button_color, fg='red', font=('Arial', 11), bd=5, \
+                    bg=button_bg, fg='red', font=('Arial', 11), bd=5, \
                     border=3, \
                     relief='groove', command=lambda x=j, y=i: self.on_button_click(x, y))
                 button.grid(row=10-i, column=j+1)
+                button.bind('<Button-2>', lambda event, x=j, y=i: self.on_middle_click(x, y))
+                button.bind('<Button-3>', lambda event, x=j, y=i: self.on_right_click(x, y))
                 self.buttons[j][i] = button
                 
         self.update_button()
         
-    def get_button_color(self, x, y):
-        return 'deepskyblue4' if (x + y) % 2 == 0 else 'slategray1'
-    
-    def reset_button_color(self, coord):
-        if coord is None:
-            return
-        self.buttons[coord.x][coord.y].config(bg=self.get_button_color(coord.x, coord.y))
-    
+        self.marked_cells = []
+           
     def init_tk(self):
         # Create the main window (fullscreen) and set its size
         self.root = tk.Tk()
-        self.root.geometry('1600x960')
+        self.root.geometry('1600x1000')
         self.root.title('Miankil')
         self.root.configure(bg='black')
 
@@ -76,8 +72,8 @@ class Game:
         
         # Create labels for the coordinates
         for i in range(11):
-            tk.Label(self.frame, text=str(i), bg='lightblue', fg='red', font=('Arial', 11)).grid(row=10-i, column=0)
-            tk.Label(self.frame, text=str(i), bg='lightblue', fg='red', font=('Arial', 11)).grid(row=11, column=i+1)
+            tk.Label(self.frame, text=str(i), bg='lightblue', fg='crimson', font=('Arial', 11)).grid(row=10-i, column=0)
+            tk.Label(self.frame, text=str(i), bg='lightblue', fg='crimson', font=('Arial', 11)).grid(row=11, column=i+1)
     
     def on_button_click(self, x, y) -> None:
         coord = Coord(x, y)
@@ -91,6 +87,7 @@ class Game:
             self.handle_pick(coord)
         
         self.update_button()
+        self.reset_marked_bg()
                 
     def handle_move(self, coord) -> None:
         # If a piece is selected, move it to the clicked cell
@@ -103,7 +100,7 @@ class Game:
         else:
             self.labels['message']['text'] = f'Invalid move for {self.selected_piece}'
 
-        self.reset_button_color(self.selected_coord)            
+        self.reset_button_bg(self.selected_coord)            
         self.selected_coord = None
         self.selected_piece = None
         
@@ -117,19 +114,42 @@ class Game:
         else:
             # If there is a piece, pick it up
             self.selected_piece = self.board.board[coord.x][coord.y]
-            self.reset_button_color(self.selected_coord)
+            self.reset_button_bg(self.selected_coord)
             self.selected_coord = coord
             self.labels['message']['text'] = f'Having {self.selected_piece}'
             # self.labels['message']['text'] = 'ccx'
+    
+    def on_right_click(self, x, y):
+        self.labels['message']['text'] = f'Right click at {x}, {y}'
         
-        
-        
+    def on_middle_click(self, x, y):
+        self.set_button_bg(Coord(x, y), 'hotpink')
+        self.marked_cells.append(Coord(x, y))
                 
     def update_button(self):
         for i in range(11):
             for j in range(11):
                 piece = self.board.board[i][j]
                 self.buttons[i][j]['text'] = piece if piece else ''
+                self.buttons[i][j]['fg'] = 'navy' if piece and piece.is_blue else 'crimson'
         
         if self.selected_coord:
-            self.buttons[self.selected_coord.x][self.selected_coord.y].config(bg='red')
+            self.set_button_bg(self.selected_coord, 'aqua')
+            
+    def get_button_bg(self, x, y):
+        return 'deepskyblue4' if (x + y) % 2 == 0 else 'slategray1'
+    
+    def set_button_bg(self, coord, color):
+        if self.buttons[coord.x][coord.y] is not None:
+            self.buttons[coord.x][coord.y].config(bg=color)
+        
+    def reset_button_bg(self, coord):
+        if coord is None:
+            return
+        self.buttons[coord.x][coord.y].config(bg=self.get_button_bg(coord.x, coord.y))
+        
+    def reset_marked_bg(self):
+        for coord in self.marked_cells:
+            self.reset_button_bg(coord)
+        self.marked_cells = []
+    

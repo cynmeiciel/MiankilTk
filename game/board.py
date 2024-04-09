@@ -10,19 +10,14 @@ class Board:
     def __init__(self):
         self.board = [[None for _ in range(11)] for _ in range(11)]
         
+        self.init_board()
+        
+    def init_board(self) -> None:
         self.board[0][0] = Pawn(True)
         self.board[0][1] = Sentinel(True)
         self.board[4][2] = Scout(True)
         self.board[0][3] = Watcher(True)
         self.board[0][4] = Guard(True)
-        
-        self.init_board()
-    
-    def init_buttons(self, buttons) -> None:
-        self.buttons = buttons
-        
-    def init_board(self) -> None:
-        pass
     
     def find_piece(self, coord : Coord) -> Piece:
         return self.board[coord.x][coord.y]

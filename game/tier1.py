@@ -15,22 +15,8 @@ class Pawn(Piece):
         super().__init__(is_blue, 'Pawn')
     
     def can_move(self, start : Coord, end : Coord):
-        # Check if the start and end coordinates are not on the same column
-        if start.x != end.x:
-            return False
-        
-        # Check if the move is one cell forward
-        if abs(start.y - end.y) != 1:
-            return False
-        
-        # Check if the move is forward
-        if self.is_blue and start.y >= end.y:
-            return False
-        
-        if not self.is_blue and start.y <= end.y:
-            return False
-        
-        return True
+        return True if start.dist_direc_y(self.is_blue, end) == 1 \
+                       and start.x == end.x else False
 
 class Sentinel(Piece):
     def __init__(self, is_blue):
