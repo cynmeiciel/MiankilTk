@@ -17,5 +17,13 @@ class Piece:
     def can_move(self, board : 'Board', start : Coord, end : Coord):
         pass
     
+    def get_moves(self, board : 'Board', start : Coord) -> list[Coord]:
+        moves = []
+        for i in range(11):
+            for j in range(11):
+                if self.can_move(start, Coord(i, j)):
+                    moves.append(Coord(i, j))
+        return moves
+    
     def promote(self):
         pass

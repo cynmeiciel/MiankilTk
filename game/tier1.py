@@ -44,8 +44,6 @@ class Scout(Piece):
             return True
         
         return False
-        
-        
     
 class Watcher(Piece):
     def __init__(self, is_blue):

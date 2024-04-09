@@ -1,5 +1,6 @@
 import tkinter as tk
 import tkinter.messagebox
+from tkinter import scrolledtext
 
 from .board import *
 from .coord import *
@@ -34,15 +35,23 @@ class Game:
                 button.bind('<Button-2>', lambda event, x=j, y=i: self.on_middle_click(x, y))
                 button.bind('<Button-3>', lambda event, x=j, y=i: self.on_right_click(x, y))
                 self.buttons[j][i] = button
+        
+        self.move_log = scrolledtext.ScrolledText(self.root, width=30, height=30, state='disabled', bg='lightblue', fg='crimson', font=('Consolas', 13))
+        self.move_log.pack(side=tk.RIGHT)
                 
+        self.marked_cells = []
+        self.posible_moves = []
+        
         self.update_button()
         
-        self.marked_cells = []
+        self.labels['message']['text'] = 'Welcome to Miankil!'
            
     def init_tk(self):
         # Create the main window (fullscreen) and set its size
         self.root = tk.Tk()
-        self.root.geometry('1600x1000')
+        self.fullscreen = False
+        self.root.bind('<F11>', self.toggle_fullscreen)
+        self.root.minsize(800, 600)
         self.root.title('Miankil')
         self.root.configure(bg='black')
 
@@ -75,6 +84,10 @@ class Game:
             tk.Label(self.frame, text=str(i), bg='lightblue', fg='crimson', font=('Arial', 11)).grid(row=10-i, column=0)
             tk.Label(self.frame, text=str(i), bg='lightblue', fg='crimson', font=('Arial', 11)).grid(row=11, column=i+1)
     
+    def toggle_fullscreen(self, event=None):
+        self.fullscreen = not self.fullscreen
+        self.root.attributes('-fullscreen', self.fullscreen)
+    
     def on_button_click(self, x, y) -> None:
         coord = Coord(x, y)
         if self.selected_piece:
@@ -87,7 +100,12 @@ class Game:
             self.handle_pick(coord)
         
         self.update_button()
-        self.reset_marked_bg()
+    
+    def log_move(self, end):
+        self.move_log.configure(state='normal')
+        self.move_log.insert(tk.END, f'{self.selected_piece}{self.selected_coord} -> {end}\n')
+        # self.move_log.see(tk.END)
+        self.move_log.configure(state='disabled')
                 
     def handle_move(self, coord) -> None:
         # If a piece is selected, move it to the clicked cell
@@ -97,6 +115,7 @@ class Game:
             self.board.board[coord.x][coord.y] = self.selected_piece
             self.board.board[self.selected_coord.x][self.selected_coord.y] = None
             self.labels['message']['text'] = f'Moved {self.selected_piece} to {coord.x}, {coord.y}'
+            self.log_move(coord)
         else:
             self.labels['message']['text'] = f'Invalid move for {self.selected_piece}'
 
@@ -111,6 +130,12 @@ class Game:
         if self.board.board[coord.x][coord.y] is None:
             # If there is no piece, display a message on the window
             self.labels['message']['text'] = f'{coord.x}, {coord.y} is empty'
+        elif self.selected_coord == coord:
+            # If the same piece is clicked again, deselect it
+            self.reset_button_bg(self.selected_coord)
+            self.selected_coord = None
+            self.selected_piece = None
+            self.labels['message']['text'] = 'Deselected'
         else:
             # If there is a piece, pick it up
             self.selected_piece = self.board.board[coord.x][coord.y]
@@ -125,16 +150,6 @@ class Game:
     def on_middle_click(self, x, y):
         self.set_button_bg(Coord(x, y), 'hotpink')
         self.marked_cells.append(Coord(x, y))
-                
-    def update_button(self):
-        for i in range(11):
-            for j in range(11):
-                piece = self.board.board[i][j]
-                self.buttons[i][j]['text'] = piece if piece else ''
-                self.buttons[i][j]['fg'] = 'navy' if piece and piece.is_blue else 'crimson'
-        
-        if self.selected_coord:
-            self.set_button_bg(self.selected_coord, 'aqua')
             
     def get_button_bg(self, x, y):
         return 'deepskyblue4' if (x + y) % 2 == 0 else 'slategray1'
@@ -153,3 +168,28 @@ class Game:
             self.reset_button_bg(coord)
         self.marked_cells = []
     
+    def update_button(self):
+        for i in range(11):
+            for j in range(11):
+                piece = self.board.board[i][j]
+                self.buttons[i][j]['text'] = piece if piece else ''
+                self.buttons[i][j]['fg'] = 'navy' if piece and piece.is_blue else 'crimson'
+        
+        self.reset_highlight()
+        
+        if self.selected_coord:
+            self.set_button_bg(self.selected_coord, 'aqua')
+            self.posible_moves = self.selected_piece.get_moves(self.board, self.selected_coord)
+            self.highlight_move()
+        
+        self.reset_marked_bg()
+            
+    def highlight_move(self):        
+        for coord in self.posible_moves:
+            self.set_button_bg(coord, 'SpringGreen2')
+    
+    def reset_highlight(self):
+        for coord in self.posible_moves:
+            self.reset_button_bg(coord)
+            
+        self.posible_moves = []

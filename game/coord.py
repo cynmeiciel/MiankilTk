@@ -10,7 +10,10 @@ class Coord:
         return Coord(self.x - other.x, self.y - other.y)
     
     def __eq__(self, other):
-        return self.x == other.x and self.y == other.y
+        try:
+            return self.x == other.x and self.y == other.y
+        except AttributeError:
+            return False
     
     def __repr__(self) -> str:
         return f'({self.x}, {self.y})'
