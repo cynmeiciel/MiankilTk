@@ -14,12 +14,12 @@ class Nexus(Piece):
     def __init__(self, is_blue):
         super().__init__(is_blue, 'Nexus')
     
-    def can_move(self, start : Coord, end : Coord):
+    def can_move(self, board : 'Board', start : Coord, end : Coord):
         return False
 
 class Custodian(Piece):
     def __init__(self, is_blue):
         super().__init__(is_blue, 'Custodian')
     
-    def can_move(self, start : Coord, end : Coord):
+    def can_move(self, board : 'Board', start : Coord, end : Coord):
         return False

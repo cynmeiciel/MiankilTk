@@ -11,9 +11,5 @@ class Ability(Enum):
 
 class PieceType(Enum):
     pass
-
-class Turn(Enum):
-    BLUE = True
-    RED = False
     
     

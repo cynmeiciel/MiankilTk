@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from .coord import *
 from .piece import *
 from .tier0 import *
@@ -18,6 +20,14 @@ class Board:
         self.board[4][2] = Scout(True)
         self.board[0][3] = Watcher(True)
         self.board[0][4] = Guard(True)
+        self.board[5][0] = Nexus(True)
+        
+        self.board[10][10] = Pawn(False)
+        self.board[10][9] = Sentinel(False)
+        self.board[6][8] = Scout(False)
+        self.board[10][7] = Watcher(False)
+        self.board[10][6] = Guard(False)
+        self.board[5][10] = Nexus(False)
     
     def find_piece(self, coord : Coord) -> Piece:
         return self.board[coord.x][coord.y]
@@ -63,3 +73,16 @@ class Board:
         
         self.init_board()
 
+class PieceCounter:
+    def __init__(self):
+        self.blue = defaultdict(int)
+        self.red = defaultdict(int)
+                
+    def count(self, piece : Piece, is_blue : bool) -> None:
+        if is_blue:
+            self.blue[str(piece.__class__)] += 1
+        else:
+            self.red[str(piece.__class__)] += 1
+
+    def __repr__(self):
+        return f'Blue: {self.blue}\nRed: {self.red}'

@@ -1,7 +1,9 @@
+from dataclasses import dataclass
+
+@dataclass
 class Coord:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+    x: int
+    y: int
         
     def __add__(self, other):
         return Coord(self.x + other.x, self.y + other.y)
