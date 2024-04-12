@@ -10,9 +10,17 @@ from .tier4 import *
 
 class Board:
     def __init__(self):
+        self.reset_game()
+       
+        
+    def reset_game(self) -> None:
         self.board = [[None for _ in range(11)] for _ in range(11)]
         
+        self.dead_pieces = PieceCounter()
+        self.on_hand_pieces = PieceCounter()
+        
         self.init_board()
+        
         
     def init_board(self) -> None:
         self.board[0][0] = Pawn(True)
@@ -29,16 +37,14 @@ class Board:
         self.board[10][6] = Guard(False)
         self.board[5][10] = Nexus(False)
     
+    
     def find_piece(self, coord : Coord) -> Piece:
         return self.board[coord.x][coord.y]
     
-    def is_valid_move(self, piece, start : Coord, end : Coord) -> bool:
-        if piece is None:
-            return False
-        return piece.can_move(self, start, end)
     
     def is_empty(self, coord : Coord) -> bool:
         return self.board[coord.x][coord.y] is None
+    
     
     def is_empty_line(self, start, end) -> bool:
         # Check if the start and end coordinates are not on the same row
@@ -51,6 +57,7 @@ class Board:
                     return False
         return True
     
+    
     def is_empty_diagonal(self, start, end) -> bool:
         # Check if the start and end coordinates are not on the same diagonal
         if abs(start.x - end.x) != abs(start.y - end.y):
@@ -62,27 +69,57 @@ class Board:
                     return False
         return True
     
+    
     def create_piece(self, piece, coord, is_blue=None) -> None:
         if is_blue is None:
             self.board[coord.x][coord.y] = piece
         else:
             self.board[coord.x][coord.y] = piece(is_blue)
         
-    def reset_game(self) -> None:
-        self.board = [[None for _ in range(11)] for _ in range(11)]
         
-        self.init_board()
+    def get_all_pieces(self, is_blue) -> list[list]:
+        pieces = []
+        for i in range(11):
+            for j in range(11):
+                if self.board[i][j] is not None and self.board[i][j].is_blue == is_blue:
+                    pieces.append([Coord(i, j), self.board[i][j]])
+        return pieces
+    
+    
+    def nexus_checked(self, is_blue) -> bool:
+        all_pieces = self.get_all_pieces(not is_blue)
+        for piece in all_pieces:
+            if piece[1].can_move(self, piece[0], BLUE_NEXUS if is_blue else RED_NEXUS):
+                return True
+        return False
+    
+    
+    def copy(self) -> 'Board':
+        new_board = Board()
+        for i in range(11):
+            for j in range(11):
+                new_board.board[i][j] = self.board[i][j]
+        return new_board
+    
+    
+    def move_piece(self, start : Coord, end : Coord) -> None:
+            if dead:=self.board[end.x][end.y]:
+                self.dead_pieces.append(dead, dead.is_blue)
+            self.board[end.x][end.y] = self.board[start.x][start.y]
+            self.board[start.x][start.y] = None
+
+
 
 class PieceCounter:
     def __init__(self):
         self.blue = defaultdict(int)
         self.red = defaultdict(int)
                 
-    def count(self, piece : Piece, is_blue : bool) -> None:
+    def append(self, piece : Piece, is_blue : bool) -> None:
         if is_blue:
-            self.blue[str(piece.__class__)] += 1
+            self.blue[piece.__class__] += 1
         else:
-            self.red[str(piece.__class__)] += 1
+            self.red[piece.__class__] += 1
 
     def __repr__(self):
         return f'Blue: {self.blue}\nRed: {self.red}'

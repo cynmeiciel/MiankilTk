@@ -14,12 +14,14 @@ class Piece:
     def __repr__(self):
         return self.name
         
-    def can_move(self, board : 'Board', end : Coord):
+    def can_move(self, board : 'Board', start : Coord, end : Coord):
         piece = board.find_piece(end)
         if piece is not None and piece.is_blue == self.is_blue:
             return False
         
-        return True
+        new_board = board.copy()
+        new_board.move_piece(start, end)
+        return not new_board.nexus_checked(self.is_blue)
     
     def get_moves(self, board : 'Board', start : Coord) -> list[Coord]:
         moves = []

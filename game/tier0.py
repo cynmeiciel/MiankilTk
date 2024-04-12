@@ -12,14 +12,14 @@ if TYPE_CHECKING:
 
 class Nexus(Piece):
     def __init__(self, is_blue):
-        super().__init__(is_blue, 'Nexus')
+        super().__init__(is_blue, 'NEX')
     
     def can_move(self, board : 'Board', start : Coord, end : Coord):
         return False
 
 class Custodian(Piece):
     def __init__(self, is_blue):
-        super().__init__(is_blue, 'Custodian')
+        super().__init__(is_blue, 'CUS')
     
     def can_move(self, board : 'Board', start : Coord, end : Coord):
         return False
