@@ -3,6 +3,10 @@ import tkinter.messagebox as msgbox
 import tkinter.simpledialog as smpldlg
 from tkinter import scrolledtext
 from tkinter import PhotoImage as PhImg
+from tkinter import Canvas as Cvs
+
+# import threading as th
+import winsound as ws
 
 from .board import *
 from .coord import *
@@ -12,6 +16,7 @@ from .tier1 import *
 from .tier2 import *
 from .tier3 import *
 from .tier4 import *
+
 
 class Game:
     def __init__(self):
@@ -23,7 +28,7 @@ class Game:
         
         # Initialize the main board with buttons
         self.buttons = [[None for _ in range(11)] for _ in range(11)]
-        button_size = 69
+        button_size = 70
         
         for i in range(11):
             for j in range(11):
@@ -56,16 +61,21 @@ class Game:
         self.labels['message']['text'] = 'Welcome to Miankil!'
            
            
-    def init_tk(self):
+    def init_tk(self) -> None:
         # Create the main window (fullscreen) and set its size
         self.root = tk.Tk()
         self.fullscreen = False
         self.root.title('Miankil')
         self.root.configure(bg='black')
+        
+        # Set the background image
+        self.bg_image = PhImg(file='game/images/bg/cyn.png')
+        self.bg_label = tk.Label(self.root, image=self.bg_image)
+        self.bg_label.place(x=0, y=0, relwidth=1, relheight=1)
 
         # Create a frame to hold the buttons
         self.frame = tk.Frame(self.root)
-        self.frame.place(relx=0.49, rely=0.5, anchor='center')
+        self.frame.place(relx=0.48, rely=0.5, anchor='center')
         self.frame.configure(bg='lightblue')
 
         # Create a new frame that sticks to the right of the current frame
@@ -103,105 +113,71 @@ class Game:
             tk.Label(self.frame, text=str(i), bg='lightblue', fg='crimson', font=('Bahnschrift', 11)).grid(row=11, column=i+1)
     
     
-    def init_bind(self):
+    def init_bind(self) -> None:
         self.root.bind('<F11>', self.toggle_fullscreen)
         self.root.bind('<F5>', lambda event: self.restart())
         self.root.bind('<Escape>', lambda event: self.root.quit())
         self.root.bind('<grave>', lambda event: self.console())
     
     
-    def init_pieces_button(self):
-        self.tier0_button = tk.Button(self.toprig_frame, text='Tier 0', bg='lightblue', fg='red', font=('Bahnschrift', 15), width=6, height=2, command=self.test_ok)
-        self.tier0_button.pack(side=tk.RIGHT)
+    def init_pieces_button(self) -> None:
+        init = lambda text, cmmd, is_top: tk.Button(self.toprig_frame if is_top else self.botrig_frame, text=text, bg='lightblue', fg='red', font=('Bahnschrift', 8), width=9, height=4, command=cmmd)
         
-        self.tier1_button = tk.Button(self.toprig_frame, text='Tier 1', bg='lightblue', fg='red', font=('Bahnschrift', 15), width=6, height=2, command=self.test_ok)
-        self.tier1_button.pack(side=tk.RIGHT)
+        self.top_piece_buttons : list[list] = [[], [], [], [], []]
+        self.bot_piece_buttons : list[list] = [[], [], [], [], []]
         
-        self.tier2_button = tk.Button(self.toprig_frame, text='Tier 2', bg='lightblue', fg='red', font=('Bahnschrift', 15), width=6, height=2, command=self.test_ok)
-        self.tier2_button.pack(side=tk.RIGHT)
+        self.pawn_button = init('Pawn', lambda: self.on_pick_piece(Pawn), False)
+        self.pawn_button.pack(side=tk.RIGHT)
         
-        self.tier3_button = tk.Button(self.toprig_frame, text='Tier 3', bg='lightblue', fg='red', font=('Bahnschrift', 15), width=6, height=2, command=self.test_ok)
-        self.tier3_button.pack(side=tk.RIGHT)
-        
-        self.tier4_button = tk.Button(self.toprig_frame, text='Tier 4', bg='lightblue', fg='red', font=('Bahnschrift', 15), width=6, height=2, command=self.test_ok)
-        self.tier4_button.pack(side=tk.RIGHT)
     
     
-    def init_extra_button(self):
-        self.restart_button = tk.Button(self.right_frame, text='🔄', bg='lightblue', fg='red', font=('Bahnschrift', 11), width=6, height=1, command=self.restart)
+    def init_extra_button(self) -> None:
+        init = lambda text, cmmd: tk.Button(self.right_frame, text=text, bg='lightblue', fg='red', font=('Bahnschrift', 11), width=6, height=1, command=cmmd)
+        
+        self.restart_button = init('🔄', self.restart)
         self.restart_button.pack(side=tk.TOP)
-        
-        self.quit_button = tk.Button(self.right_frame, text='Quit', bg='lightblue', fg='red', font=('Bahnschrift', 11), width=6, height=1, command=self.root.quit)
+        self.fullscreen_button = init('⇱', self.toggle_fullscreen)
+        self.fullscreen_button.pack(side=tk.TOP)
+        self.quit_button = init('❌', self.root.quit)
         self.quit_button.pack(side=tk.TOP)
+        self.console_button = init('🔧', self.console)
+        self.console_button.pack(side=tk.TOP)
         
         self.init_pieces_button()
     
     
-    def init_images(self):
+    def init_images(self) -> None:
         self.piece_IMG : dict[str, dict[str, PhImg]] = {
             'blue' : {
-                'pawn' : PhImg(file='images/blue_pawn.png'),
-                'sentinel' : PhImg(file='images/blue_sentinel.png'),
-                'scout' : PhImg(file='images/blue_scout.png'),
-                'watcher' : PhImg(file='images/blue_watcher.png'),
-                'guard' : PhImg(file='images/blue_guard.png'),
-                'nexus' : PhImg(file='images/blue_nexus.png')
+                'pawn' : PhImg(file='game/images/blue_pawn.png'),
+                'sentinel' : PhImg(file='game/images/blue_sentinel.png'),
+                'scout' : PhImg(file='game/images/blue_scout.png'),
+                'watcher' : PhImg(file='game/images/blue_watcher.png'),
+                'guard' : PhImg(file='game/images/blue_guard.png'),
+                'nexus' : PhImg(file='game/images/blue_nexus.png')
             },
             'red' : {
-                'pawn' : PhImg(file='images/red_pawn.png'),
-                'sentinel' : PhImg(file='images/red_sentinel.png'),
-                'scout' : PhImg(file='images/red_scout.png'),
-                'watcher' : PhImg(file='images/red_watcher.png'),
-                'guard' : PhImg(file='images/red_guard.png'),
-                'nexus' : PhImg(file='images/red_nexus.png')
+                'pawn' : PhImg(file='game/images/red_pawn.png'),
+                'sentinel' : PhImg(file='game/images/red_sentinel.png'),
+                'scout' : PhImg(file='game/images/red_scout.png'),
+                'watcher' : PhImg(file='game/images/red_watcher.png'),
+                'guard' : PhImg(file='game/images/red_guard.png'),
+                'nexus' : PhImg(file='game/images/red_nexus.png')
             }
         }
     
     
-    def toggle_fullscreen(self, event=None):
+    def toggle_fullscreen(self, event=None) -> None:
         self.fullscreen = not self.fullscreen
         self.root.attributes('-fullscreen', self.fullscreen)
     
     
-    def toggle_dev_mode(self):
+    def toggle_dev_mode(self) -> None:
         self.dev_mode = not self.dev_mode
         self.labels['message']['text'] = 'Dev mode enabled' if self.dev_mode else 'Dev mode disabled'
     
     
-    def on_button_click(self, x, y) -> None:
-        coord = Coord(x, y)
-        if not self.dev_mode:
-            if self.selected_piece:
-                if self.board.find_piece(coord) is None or\
-                self.board.find_piece(coord).is_blue != self.selected_piece.is_blue:
-                    self.handle_move(coord)
-                else:
-                    self.handle_pick(coord)
-            else:
-                self.handle_pick(coord)
-                
-        else: # Dev mode
-            if self.selected_piece:
-                if self.selected_coord == coord:
-                    self.reset_button_bg(self.selected_coord)
-                    self.selected_coord = None
-                    self.selected_piece = None
-                    self.labels['message']['text'] = 'Deselected'
-                else:
-                    self.board.move_piece(self.selected_coord, coord)
-                    self.reset_button_bg(self.selected_coord)
-                    self.selected_piece = None
-                    self.selected_coord = None
-            else:
-                if self.board.find_piece(coord):
-                    self.selected_piece = self.board.find_piece(coord)
-                    self.selected_coord = coord 
-            self.reset_highlight()
-        
-        self.update_button()
-    
-    
-    def console(self):
+    def console(self) -> None:
         command = smpldlg.askstring('Console', 'Enter command:')
         if command == 'restart':
             self.restart()
@@ -217,13 +193,16 @@ class Game:
     # GAME LOGIC FUNCTIONS ON RUNTIME
     
            
-    def log_move(self, end):
+    def log_move(self, end, drop: bool = False) -> None:
         # Log the move in the ScrolledText widget
-        move_text = f'{self.selected_piece}{self.selected_coord} -> {end}\n'
-        side = 'blue' if self.selected_piece.is_blue else 'red'
-        self.move_log.configure(state='normal')  # Enable editing
-        self.move_log.insert(tk.END, move_text, side)
-        self.move_log.configure(state='disabled')  # Disable editing
+        if drop:
+            move_text = f'{self.selected_piece} dropped at {end}\n'
+        else:
+            move_text = f'{self.selected_piece}{self.selected_coord} -> {end}\n'
+            side = 'blue' if self.selected_piece.is_blue else 'red'
+            self.move_log.configure(state='normal')  # Enable editing
+            self.move_log.insert(tk.END, move_text, side)
+            self.move_log.configure(state='disabled')  # Disable editing
 
         # Configure the tag to use the appropriate color
         if self.selected_piece.is_blue:
@@ -239,6 +218,7 @@ class Game:
             self.labels['message']['text'] = f'Moved {self.selected_piece} to {coord.x}, {coord.y}'
             self.log_move(coord)
             self.turn = not self.turn
+            ws.PlaySound('game/sfx/move.wav', ws.SND_FILENAME | ws.SND_ASYNC | ws.SND_NODEFAULT) 
         else:
             self.labels['message']['text'] = f'Invalid move for {self.selected_piece}'
 
@@ -271,37 +251,98 @@ class Game:
             # self.labels['message']['text'] = 'ccx'
     
     
-    def on_right_click(self, x, y):
+    def handle_drop(self, coord) -> None:
+        if self.board.find_piece(coord) is None:
+            self.board.board[coord.x][coord.y] = self.selected_piece
+            self.labels['message']['text'] = f'Dropped {self.selected_piece} at {coord.x}, {coord.y}'
+            self.log_move(coord, drop=True)
+            self.turn = not self.turn
+            ws.PlaySound('game/sfx/move.wav', ws.SND_FILENAME | ws.SND_ASYNC | ws.SND_NODEFAULT)
+        else:
+            self.board.on_hand_pieces.append(self.selected_piece, self.turn)
+        
+        # self.reset_button_bg(None, )
+        self.selected_coord = None
+        self.selected_piece = None
+    
+    def on_button_click(self, x, y) -> None:
+        coord = Coord(x, y)
+        if (not self.selected_coord) and (self.selected_piece):
+            self.handle_drop(coord)
+        
+        elif not self.dev_mode:
+            if self.selected_piece:
+                if self.board.find_piece(coord) is None or\
+                self.board.find_piece(coord).is_blue != self.selected_piece.is_blue:
+                    self.handle_move(coord)
+                else:
+                    self.handle_pick(coord)
+            else:
+                self.handle_pick(coord)
+                
+        else: # Dev mode
+            if self.selected_piece:
+                if self.selected_coord == coord:
+                    self.reset_button_bg(self.selected_coord)
+                    self.selected_coord = None
+                    self.selected_piece = None
+                    self.labels['message']['text'] = 'Deselected'
+                else:
+                    self.board.move_piece(self.selected_coord, coord)
+                    self.reset_button_bg(self.selected_coord)
+                    self.selected_piece = None
+                    self.selected_coord = None
+            else:
+                if self.board.find_piece(coord):
+                    self.selected_piece = self.board.find_piece(coord)
+                    self.selected_coord = coord 
+            self.reset_highlight()
+        
+        self.update_button()
+    
+    
+    def on_right_click(self, x, y) -> None:
         self.labels['message']['text'] = f'Right click at {x}, {y}'
         
         
-    def on_middle_click(self, x, y):
-        self.set_button_bg(Coord(x, y), 'hotpink')
-        self.marked_cells.append(Coord(x, y))
+    def on_middle_click(self, x, y) -> None:
+        if (crd:=Coord(x, y)) in self.marked_cells:
+            self.reset_button_bg(crd)
+            self.marked_cells.remove(crd)
+        else:    
+            self.set_button_bg(crd, 'hotpink')
+            self.marked_cells.append(crd)
             
+    
+    def on_pick_piece(self, piece : type) -> None:
+        if self.dev_mode or self.board.on_hand_pieces.get(piece, self.turn):
+            self.selected_piece = self.board.on_hand_pieces.get(piece, self.turn)
+            self.labels['message']['text'] = f'Having {self.selected_piece}'
+        
+        self.update_button()
             
-    def get_button_bg(self, x, y):
+    def get_button_bg(self, x, y) -> str:
         return 'deepskyblue4' if (x + y) % 2 == 0 else 'slategray1'
     
     
-    def set_button_bg(self, coord, color):
+    def set_button_bg(self, coord, color) -> None:
         if self.buttons[coord.x][coord.y] is not None:
             self.buttons[coord.x][coord.y].config(bg=color)
         
         
-    def reset_button_bg(self, coord):
+    def reset_button_bg(self, coord, button) -> None:
         if coord is None:
-            return
+            button.config(bg='lightblue')
         self.buttons[coord.x][coord.y].config(bg=self.get_button_bg(coord.x, coord.y))
         
         
-    def reset_marked_bg(self):
+    def reset_marked_bg(self) -> None:
         for coord in self.marked_cells:
             self.reset_button_bg(coord)
         self.marked_cells = []
     
     
-    def update_button(self):
+    def update_button(self) -> None:
         for i in range(11):
             for j in range(11):
                 piece = self.board.board[i][j]
@@ -322,19 +363,19 @@ class Game:
         self.reset_marked_bg()
            
             
-    def highlight_move(self):        
+    def highlight_move(self) -> None:        
         for coord in self.posible_moves:
             self.set_button_bg(coord, 'SpringGreen2')
     
     
-    def reset_highlight(self):
+    def reset_highlight(self) -> None:
         for coord in self.posible_moves:
             self.reset_button_bg(coord)
             
         self.posible_moves = []
         
         
-    def reset_params(self):
+    def reset_params(self) -> None:
         self.dev_mode = False
         self.successfully = False
         self.turn = True
@@ -345,7 +386,7 @@ class Game:
         self.move_log.configure(state='disabled')
         
         
-    def restart(self):
+    def restart(self) -> None:
         if msgbox.askyesno('Restart', 'Are you sure you want to restart the game?'):
             self.board.reset_game()
             self.reset_params()
@@ -356,5 +397,5 @@ class Game:
             self.labels['message']['text'] = 'Game restarted'
             
             
-    def test_ok(self):
-        msgbox.showinfo('Test', 'OK')
+    def test_ok(self) -> None:
+        self.labels['message']['text'] = 'Test OK'

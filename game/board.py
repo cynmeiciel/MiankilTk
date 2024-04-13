@@ -112,14 +112,19 @@ class Board:
 
 class PieceCounter:
     def __init__(self):
-        self.blue = defaultdict(int)
-        self.red = defaultdict(int)
+        self.pieces : dict[dict] = {
+            'blue' : defaultdict(int),
+            'red' : defaultdict(int)
+        }
                 
     def append(self, piece : Piece, is_blue : bool) -> None:
-        if is_blue:
-            self.blue[piece.__class__] += 1
-        else:
-            self.red[piece.__class__] += 1
+        self.pieces['blue' if is_blue else 'red'][piece] += 1
+
+    def get(self, piece : type, is_blue : bool) -> Piece:
+        side = 'blue' if is_blue else 'red'
+        self.pieces[side][piece] -= 1
+        
+        return piece(is_blue)
 
     def __repr__(self):
         return f'Blue: {self.blue}\nRed: {self.red}'

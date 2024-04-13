@@ -16,6 +16,10 @@ class Piece:
         
     def can_move(self, board : 'Board', start : Coord, end : Coord):
         piece = board.find_piece(end)
+        ENEMY_NEXUS = RED_NEXUS if self.is_blue else BLUE_NEXUS
+        if end == ENEMY_NEXUS:
+            return True
+        
         if piece is not None and piece.is_blue == self.is_blue:
             return False
         
