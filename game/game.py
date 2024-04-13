@@ -330,11 +330,13 @@ class Game:
             self.buttons[coord.x][coord.y].config(bg=color)
         
         
-    def reset_button_bg(self, coord, button) -> None:
-        if coord is None:
+    def reset_button_bg(self, coord, button = None) -> None:
+        if coord is None and button is not None:
             button.config(bg='lightblue')
-        self.buttons[coord.x][coord.y].config(bg=self.get_button_bg(coord.x, coord.y))
-        
+        try:
+            self.buttons[coord.x][coord.y].config(bg=self.get_button_bg(coord.x, coord.y))
+        except AttributeError:
+            pass
         
     def reset_marked_bg(self) -> None:
         for coord in self.marked_cells:
