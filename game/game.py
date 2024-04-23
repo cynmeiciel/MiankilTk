@@ -4,8 +4,8 @@ import tkinter.simpledialog as smpldlg
 from tkinter import scrolledtext
 from tkinter import PhotoImage as PhImg
 from tkinter import Canvas as Cvs
+from PIL import Image, ImageTk
 
-# import threading as th
 import winsound as ws
 
 from .board import *
@@ -24,7 +24,7 @@ class Game:
         
         self.init_tk()
         self.init_bind()
-        # self.init_images()
+        self.init_images()
         
         # Initialize the main board with buttons
         self.buttons = [[None for _ in range(11)] for _ in range(11)]
@@ -32,9 +32,9 @@ class Game:
         
         for i in range(11):
             for j in range(11):
-                button_bg = self.get_button_bg(i, j)
+                bg = SQUARE_COLORS[j][i]
                 button = tk.Button(self.frame, text='', \
-                    bg=button_bg, fg='red', font=('Bahnschrift', 11), bd=5, \
+                    bg=bg, fg='red', font=('Bahnschrift', 11), bd=5, \
                     border=3, \
                     relief='groove', command=lambda x=j, y=i: self.on_button_click(x, y))
                 button.grid(row=10-i, column=j+1, sticky='nsew')
@@ -118,17 +118,38 @@ class Game:
         self.root.bind('<F5>', lambda event: self.restart())
         self.root.bind('<Escape>', lambda event: self.root.quit())
         self.root.bind('<grave>', lambda event: self.console())
+        self.root.bind('<x>', lambda event: self.pending_delete())
     
     
     def init_pieces_button(self) -> None:
-        init = lambda text, cmmd, is_top: tk.Button(self.toprig_frame if is_top else self.botrig_frame, text=text, bg='lightblue', fg='red', font=('Bahnschrift', 8), width=9, height=4, command=cmmd)
+        def init(text, cmmd):
+            bttn = tk.Button(self.botrig_frame, bg='lightblue', fg='red', font=('Bahnschrift', 8), \
+                 command=cmmd)
+            try:
+                image = self.piece_IMG['blue'][text.lower()]
+                bttn.config(image=image, compound='center')
+            except KeyError:
+                bttn['text'] = text
+                
+            return bttn
         
-        self.top_piece_buttons : list[list] = [[], [], [], [], []]
-        self.bot_piece_buttons : list[list] = [[], [], [], [], []]
+        self.piece_buttons : list[dict[str, tk.Button]] = []
         
-        self.pawn_button = init('Pawn', lambda: self.on_pick_piece(Pawn), False)
-        self.pawn_button.pack(side=tk.RIGHT)
+        self.piece_buttons.append({
+            'Nexus' : init('Nexus', lambda: self.on_pick_piece(Nexus)),
+            'Custodian' : init('Custodian', lambda: self.on_pick_piece(Custodian))
+        })
+        self.piece_buttons.append({
+            'Pawn' : init('Pawn', lambda: self.on_pick_piece(Pawn)),
+            'Sentinel' : init('Sentinel', lambda: self.on_pick_piece(Sentinel)),
+            'Scout' : init('Scout', lambda: self.on_pick_piece(Scout)),
+            'Watcher' : init('Watcher', lambda: self.on_pick_piece(Watcher)),
+            'Guard' : init('Guard', lambda: self.on_pick_piece(Guard))
+        }
+        )
         
+        for button in self.piece_buttons[1].values():
+            button.pack(fill=tk.BOTH, expand=1, side=tk.LEFT)
     
     
     def init_extra_button(self) -> None:
@@ -142,6 +163,8 @@ class Game:
         self.quit_button.pack(side=tk.TOP)
         self.console_button = init('🔧', self.console)
         self.console_button.pack(side=tk.TOP)
+        self.delete_piece_button = init('x', self.pending_delete)
+        self.delete_piece_button.pack(side=tk.TOP)
         
         self.init_pieces_button()
     
@@ -149,22 +172,34 @@ class Game:
     def init_images(self) -> None:
         self.piece_IMG : dict[str, dict[str, PhImg]] = {
             'blue' : {
-                'pawn' : PhImg(file='game/images/blue_pawn.png'),
-                'sentinel' : PhImg(file='game/images/blue_sentinel.png'),
-                'scout' : PhImg(file='game/images/blue_scout.png'),
-                'watcher' : PhImg(file='game/images/blue_watcher.png'),
-                'guard' : PhImg(file='game/images/blue_guard.png'),
-                'nexus' : PhImg(file='game/images/blue_nexus.png')
+                'pawn' : PhImg(file='game/images/piece/blue_pawn.png'),
+                # 'sentinel' : PhImg(file='game/images/piece/blue_sentinel.png'),
+                # 'scout' : PhImg(file='game/images/piece/blue_scout.png'),
+                # 'watcher' : PhImg(file='game/images/piece/blue_watcher.png'),
+                'guard' : PhImg(file='game/images/piece/blue_guard.png'),
+                'nexus' : PhImg(file='game/images/piece/blue_nexus.png')
             },
             'red' : {
-                'pawn' : PhImg(file='game/images/red_pawn.png'),
-                'sentinel' : PhImg(file='game/images/red_sentinel.png'),
-                'scout' : PhImg(file='game/images/red_scout.png'),
-                'watcher' : PhImg(file='game/images/red_watcher.png'),
-                'guard' : PhImg(file='game/images/red_guard.png'),
-                'nexus' : PhImg(file='game/images/red_nexus.png')
+                'pawn' : PhImg(file='game/images/piece/red_pawn.png'),
+                # 'sentinel' : PhImg(file='game/images/piece/red_sentinel.png'),
+                # 'scout' : PhImg(file='game/images/piece/red_scout.png'),
+                # 'watcher' : PhImg(file='game/images/piece/red_watcher.png'),
+                'guard' : PhImg(file='game/images/piece/red_guard.png'),
+                'nexus' : PhImg(file='game/images/piece/red_nexus.png')
             }
         }
+        
+        # Resize the images
+        for color in self.piece_IMG:
+            for name in self.piece_IMG[color]:
+                self.piece_IMG[color][name] = self.piece_IMG[color][name].subsample(12)
+                if color == 'red':
+                    # Convert the PhotoImage to a PIL Image
+                    pil_image = ImageTk.getimage(self.piece_IMG[color][name])
+                    # Flip the PIL Image
+                    flipped_image = pil_image.transpose(Image.FLIP_TOP_BOTTOM)
+                    # Convert the PIL Image back to a PhotoImage
+                    self.piece_IMG[color][name] = ImageTk.PhotoImage(flipped_image)
     
     
     def toggle_fullscreen(self, event=None) -> None:
@@ -188,6 +223,10 @@ class Game:
         elif command == 'dev_mode':
             self.toggle_dev_mode()
         
+    def pending_delete(self) -> None:
+        self.delete_pending = not self.delete_pending
+        self.labels['message']['text'] = 'Delete pending' if self.delete_pending else 'Delete off'
+    
     
     # END OF TKINTER INITIALIZATION
     # GAME LOGIC FUNCTIONS ON RUNTIME
@@ -197,6 +236,10 @@ class Game:
         # Log the move in the ScrolledText widget
         if drop:
             move_text = f'{self.selected_piece} dropped at {end}\n'
+            side = 'blue' if self.turn else 'red'
+            self.move_log.configure(state='normal')  # Enable editing
+            self.move_log.insert(tk.END, move_text, side)
+            self.move_log.configure(state='disabled')  # Disable editing
         else:
             move_text = f'{self.selected_piece}{self.selected_coord} -> {end}\n'
             side = 'blue' if self.selected_piece.is_blue else 'red'
@@ -270,6 +313,11 @@ class Game:
         if (not self.selected_coord) and (self.selected_piece):
             self.handle_drop(coord)
         
+        elif self.delete_pending:
+            self.board.delete_piece(coord)
+            self.delete_pending = False
+            self.labels['message']['text'] = f'Deleted piece at {coord.x}, {coord.y}'
+        
         elif not self.dev_mode:
             if self.selected_piece:
                 if self.board.find_piece(coord) is None or\
@@ -322,17 +370,14 @@ class Game:
         self.update_button()
             
     def get_button_bg(self, x, y) -> str:
-        return 'deepskyblue4' if (x + y) % 2 == 0 else 'slategray1'
-    
+        return SQUARE_COLORS[x][y]
     
     def set_button_bg(self, coord, color) -> None:
         if self.buttons[coord.x][coord.y] is not None:
             self.buttons[coord.x][coord.y].config(bg=color)
         
         
-    def reset_button_bg(self, coord, button = None) -> None:
-        if coord is None and button is not None:
-            button.config(bg='lightblue')
+    def reset_button_bg(self, coord) -> None:
         try:
             self.buttons[coord.x][coord.y].config(bg=self.get_button_bg(coord.x, coord.y))
         except AttributeError:
@@ -349,11 +394,16 @@ class Game:
             for j in range(11):
                 piece = self.board.board[i][j]
                 if piece:
-                    self.buttons[i][j]['text'] = piece
-                    self.buttons[i][j]['fg'] = 'navy' if piece.is_blue else 'crimson'
+                    try:
+                        image = self.piece_IMG['blue' if piece.is_blue else 'red'][piece.name.lower()]
+                        self.buttons[i][j].config(image=image, compound='center')
+                    except KeyError:
+                        self.buttons[i][j]['text'] = piece
+                        self.buttons[i][j]['fg'] = 'navy' if piece.is_blue else 'crimson'
 
                 else:
                     self.buttons[i][j]['text'] = ''
+                    self.buttons[i][j]['image'] = ''
                             
         self.reset_highlight()
         
@@ -381,6 +431,7 @@ class Game:
         self.dev_mode = False
         self.successfully = False
         self.turn = True
+        self.delete_pending = False
         self.selected_coord = None
         self.selected_piece = None
         self.move_log.configure(state='normal')

@@ -75,7 +75,9 @@ class Board:
             self.board[coord.x][coord.y] = piece
         else:
             self.board[coord.x][coord.y] = piece(is_blue)
-        
+    
+    def delete_piece(self, coord : Coord) -> None:
+        self.board[coord.x][coord.y] = None
         
     def get_all_pieces(self, is_blue) -> list[list]:
         pieces = []

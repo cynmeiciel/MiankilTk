@@ -12,26 +12,17 @@ if TYPE_CHECKING:
 
 class Pawn(Piece):
     def __init__(self, is_blue):
-        super().__init__(is_blue, 'PWN')
+        super().__init__(is_blue, 'Pawn')
     
     def can_move(self, board : 'Board', start : Coord, end : Coord):
-        return super().can_move(board, start, end) if start.dist_direc_y(self.is_blue, end) == 1 \
-                       and start.x == end.x else False
-
-class Sentinel(Piece):
-    def __init__(self, is_blue):
-        super().__init__(is_blue, 'SNT')
-    
-    def can_move(self, board : 'Board', start : Coord, end : Coord):
-        # Check if the start and end coordinates are not on the same column or row
-        if start.x != end.x and start.y != end.y:
-            return False
-        
-        return super().can_move(board, start, end) if start.dist_radius(end) == 2 else False
+        return super().can_move(board, start, end) \
+            if (start.dist_direc_y(self.is_blue, end) == 1 and start.x == end.x) \
+            or (start.y == end.y and board.find_piece(end) is not None)\
+            else False
     
 class Scout(Piece):
     def __init__(self, is_blue):
-        super().__init__(is_blue, 'SCT')
+        super().__init__(is_blue, 'Scout')
     
     # Moves in an "L" shape, but cannot move backwards
     def can_move(self, board : 'Board', start: Coord, end: Coord):
@@ -47,7 +38,7 @@ class Scout(Piece):
     
 class Watcher(Piece):
     def __init__(self, is_blue):
-        super().__init__(is_blue, 'WTC')
+        super().__init__(is_blue, 'Watcher')
     
     def can_move(self, board : 'Board', start : Coord, end : Coord):
         if (diag:=abs(start.x - end.x)) == abs(start.y - end.y):
@@ -56,7 +47,7 @@ class Watcher(Piece):
     
 class Guard(Piece):
     def __init__(self, is_blue):
-        super().__init__(is_blue, 'GRD')
+        super().__init__(is_blue, 'Guard')
     
     def can_move(self, board : 'Board', start : Coord, end : Coord):
         return super().can_move(board, start, end) if start.dist_radius(end) == 1 else False
